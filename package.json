@@ -1,0 +1,33 @@
+{
+  "name": "tourmate",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.11.0",
+    "dotenv": "^16.4.7",
+    "framer-motion": "^13.4.4",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.469.0",
+    "mongoose": "^8.9.5",
+    "next": "14.2.35",
+    "razorpay": "^2.9.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}
