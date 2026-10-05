@@ -8,7 +8,7 @@ require("dotenv").config({ path: ".env.local" });
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/tourmate";
+const MONGODB_URI = process.env.MONGODB_URI;
 const DEMO_PASSWORD = "Demo@1234";
 
 // Inline lightweight schemas (mirrors /models) so this script has no
@@ -143,8 +143,38 @@ const GUIDE_SEED = [
   { name: "Neha Bhatt", location: "Manali, Himachal Pradesh", experience: 2, languages: ["English"], specialties: ["Adventure"], pricePerDay: 2500, pricePerHour: 350, bio: "New but enthusiastic guide for river rafting and short treks." },
 ];
 
+// Describes the target WITHOUT printing credentials (the URI contains the password).
+function describeTarget(uri) {
+  try {
+    const noScheme = uri.replace(/^mongodb(\+srv)?:\/\//, "");
+    const afterAuth = noScheme.includes("@") ? noScheme.slice(noScheme.lastIndexOf("@") + 1) : noScheme;
+    const host = afterAuth.split("/")[0];
+    const dbName = (afterAuth.split("/")[1] || "").split("?")[0] || "(none - MongoDB will use 'test')";
+    return { host, dbName };
+  } catch {
+    return { host: "unknown", dbName: "unknown" };
+  }
+}
+
 async function run() {
-  console.log("Connecting to MongoDB:", MONGODB_URI);
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is not set. Put it in .env.local (see .env.example) before running the seed.");
+  }
+
+  const { host, dbName } = describeTarget(MONGODB_URI);
+  const isLocal = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);
+  console.log(`Target database: ${dbName} on ${host}`);
+
+  // This script DELETES users, guides, bookings, reviews, etc. Never let it wipe a hosted
+  // database (e.g. your production Atlas cluster) by accident.
+  if (!isLocal && !process.argv.includes("--yes")) {
+    console.error(
+      "\nRefusing to run: this seed script ERASES existing data and the target is not localhost.\n" +
+        "If you really want to wipe and re-seed this database, run:  npm run seed -- --yes\n"
+    );
+    process.exit(1);
+  }
+
   await mongoose.connect(MONGODB_URI);
 
   console.log("Clearing existing collections...");

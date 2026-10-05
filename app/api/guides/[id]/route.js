@@ -1,7 +1,12 @@
 import { connectDB } from "@/lib/db";
 import Guide from "@/models/Guide";
-import { ok, fail } from "@/lib/apiResponse";
+import User from "@/models/User";
+import { ok, fail, serverError } from "@/lib/apiResponse";
 import { isValidObjectId } from "@/utils/validators";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 export async function GET(_req, { params }) {
   try {
@@ -11,6 +16,6 @@ export async function GET(_req, { params }) {
     if (!guide) return fail("Guide not found.", 404);
     return ok({ guide });
   } catch (err) {
-    return fail(err.message || "Failed to load guide.", 500);
+    return serverError(err, "Failed to load guide.");
   }
 }

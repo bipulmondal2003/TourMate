@@ -2,11 +2,15 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import Guide from "@/models/Guide";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, withErrorHandling } from "@/lib/apiResponse";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 // Update the current user's own profile (name, phone, avatar) and,
 // for guides, their guide-profile fields.
-export async function PATCH(req) {
+async function handlePATCH(req) {
   const session = getCurrentUserFromCookies();
   const authError = requireAuth(session);
   if (authError) return authError;
@@ -33,3 +37,5 @@ export async function PATCH(req) {
     guide,
   });
 }
+
+export const PATCH = withErrorHandling(handlePATCH, "PATCH /api/users/profile");

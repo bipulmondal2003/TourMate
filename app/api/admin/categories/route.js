@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import TourCategory from "@/models/TourCategory";
 import { requireAdmin } from "@/lib/adminGuard";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, withErrorHandling } from "@/lib/apiResponse";
 
-export async function GET() {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handleGET() {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -11,7 +15,7 @@ export async function GET() {
   return ok({ categories });
 }
 
-export async function POST(req) {
+async function handlePOST(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -21,7 +25,7 @@ export async function POST(req) {
   return ok({ category }, 201);
 }
 
-export async function DELETE(req) {
+async function handleDELETE(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -30,3 +34,7 @@ export async function DELETE(req) {
   await TourCategory.findByIdAndDelete(id);
   return ok({ message: "Category deleted." });
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/admin/categories");
+export const POST = withErrorHandling(handlePOST, "POST /api/admin/categories");
+export const DELETE = withErrorHandling(handleDELETE, "DELETE /api/admin/categories");

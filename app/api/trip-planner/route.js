@@ -1,5 +1,9 @@
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, serverError } from "@/lib/apiResponse";
 import { generateItineraryWithGemini, isGeminiConfigured } from "@/lib/gemini";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 const ACTIVITY_BANK = {
   Heritage: ["Explore the old city walls", "Guided fort/palace tour", "Visit a heritage museum", "Sunset at a historic monument"],
@@ -75,6 +79,6 @@ export async function POST(req) {
     const demo = generateDemoItinerary({ destination, days, budget, people, interests });
     return ok({ plan: demo, demoMode: true });
   } catch (err) {
-    return fail(err.message || "Failed to generate itinerary.", 500);
+    return serverError(err, "Failed to generate itinerary.");
   }
 }

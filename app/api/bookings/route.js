@@ -2,10 +2,14 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import Guide from "@/models/Guide";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { calculateBookingPrice } from "@/utils/pricing";
 import { createNotification } from "@/services/notificationService";
 import { isValidObjectId } from "@/utils/validators";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 // Create a booking (tourist only). Price is ALWAYS computed on the
 // server from the guide's stored rates — the client total is ignored.
@@ -29,7 +33,12 @@ export async function POST(req) {
     if (guide.status !== "approved") return fail("This guide is not currently accepting bookings.", 400);
 
     const bookingDate = new Date(date);
-    if (bookingDate < new Date(new Date().toDateString())) {
+    if (Number.isNaN(bookingDate.getTime())) return fail("Please provide a valid booking date.");
+    // Compare against the start of today in UTC. The server's local timezone differs between
+    // your laptop and Vercel (which runs in UTC), so never rely on toDateString()/local time here.
+    const startOfTodayUtc = new Date();
+    startOfTodayUtc.setUTCHours(0, 0, 0, 0);
+    if (bookingDate < startOfTodayUtc) {
       return fail("Booking date cannot be in the past.");
     }
 
@@ -73,7 +82,7 @@ export async function POST(req) {
 
     return ok({ booking: populated }, 201);
   } catch (err) {
-    return fail(err.message || "Failed to create booking.", 500);
+    return serverError(err, "Failed to create booking.");
   }
 }
 
@@ -108,6 +117,6 @@ export async function GET(req) {
 
     return ok({ bookings });
   } catch (err) {
-    return fail(err.message || "Failed to load bookings.", 500);
+    return serverError(err, "Failed to load bookings.");
   }
 }

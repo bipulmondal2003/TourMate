@@ -3,9 +3,13 @@ import Review from "@/models/Review";
 import Booking from "@/models/Booking";
 import Guide from "@/models/Guide";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { createNotification } from "@/services/notificationService";
 import { isValidObjectId } from "@/utils/validators";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 // Tourists may only review a guide after an eligible completed booking.
 export async function POST(req) {
@@ -55,6 +59,6 @@ export async function POST(req) {
 
     return ok({ review }, 201);
   } catch (err) {
-    return fail(err.message || "Failed to submit review.", 500);
+    return serverError(err, "Failed to submit review.");
   }
 }

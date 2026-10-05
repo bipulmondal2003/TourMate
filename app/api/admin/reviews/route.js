@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import Review from "@/models/Review";
 import { requireAdmin } from "@/lib/adminGuard";
-import { ok } from "@/lib/apiResponse";
+import { ok, withErrorHandling } from "@/lib/apiResponse";
 
-export async function GET() {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handleGET() {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -13,3 +17,5 @@ export async function GET() {
     .sort({ createdAt: -1 });
   return ok({ reviews });
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/admin/reviews");

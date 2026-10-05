@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { getCurrentUserFromCookies, verifyPassword, hashPassword } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, withErrorHandling } from "@/lib/apiResponse";
 
-export async function POST(req) {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handlePOST(req) {
   const session = getCurrentUserFromCookies();
   const authError = requireAuth(session);
   if (authError) return authError;
@@ -22,3 +26,5 @@ export async function POST(req) {
 
   return ok({ message: "Password changed successfully." });
 }
+
+export const POST = withErrorHandling(handlePOST, "POST /api/users/change-password");

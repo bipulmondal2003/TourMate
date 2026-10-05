@@ -7,7 +7,9 @@ export function calculateBookingPrice({ pricePerHour, pricePerDay, durationHours
   const people = Number(numberOfPeople);
 
   if (!hours || hours <= 0 || !people || people <= 0) {
-    throw new Error("Invalid duration or number of people.");
+    const err = new Error("Invalid duration or number of people.");
+    err.status = 400; // surfaced as a 400 by serverError(), not a generic 500
+    throw err;
   }
 
   let base;

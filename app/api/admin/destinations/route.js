@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import Destination from "@/models/Destination";
 import { requireAdmin } from "@/lib/adminGuard";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, withErrorHandling } from "@/lib/apiResponse";
 
-export async function GET() {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handleGET() {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -11,7 +15,7 @@ export async function GET() {
   return ok({ destinations });
 }
 
-export async function POST(req) {
+async function handlePOST(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -21,7 +25,7 @@ export async function POST(req) {
   return ok({ destination }, 201);
 }
 
-export async function PATCH(req) {
+async function handlePATCH(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -31,7 +35,7 @@ export async function PATCH(req) {
   return ok({ destination });
 }
 
-export async function DELETE(req) {
+async function handleDELETE(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -40,3 +44,8 @@ export async function DELETE(req) {
   await Destination.findByIdAndDelete(id);
   return ok({ message: "Destination deleted." });
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/admin/destinations");
+export const POST = withErrorHandling(handlePOST, "POST /api/admin/destinations");
+export const PATCH = withErrorHandling(handlePATCH, "PATCH /api/admin/destinations");
+export const DELETE = withErrorHandling(handleDELETE, "DELETE /api/admin/destinations");

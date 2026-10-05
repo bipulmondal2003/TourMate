@@ -3,9 +3,13 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import Payment from "@/models/Payment";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { createNotification } from "@/services/notificationService";
 import { RAZORPAY_KEY_SECRET } from "@/lib/razorpay";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
@@ -68,6 +72,6 @@ export async function POST(req) {
 
     return ok({ booking, payment });
   } catch (err) {
-    return fail(err.message || "Payment verification failed.", 500);
+    return serverError(err, "Payment verification failed.");
   }
 }

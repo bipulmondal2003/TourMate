@@ -2,11 +2,15 @@ import { connectDB } from "@/lib/db";
 import Message from "@/models/Message";
 import Conversation from "@/models/Conversation";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, withErrorHandling } from "@/lib/apiResponse";
 import { createNotification } from "@/services/notificationService";
 import { isValidObjectId } from "@/utils/validators";
 
-export async function GET(req) {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handleGET(req) {
   const user = getCurrentUserFromCookies();
   const authError = requireAuth(user);
   if (authError) return authError;
@@ -27,7 +31,7 @@ export async function GET(req) {
   return ok({ messages });
 }
 
-export async function POST(req) {
+async function handlePOST(req) {
   const user = getCurrentUserFromCookies();
   const authError = requireAuth(user);
   if (authError) return authError;
@@ -61,3 +65,6 @@ export async function POST(req) {
   const populated = await message.populate("sender", "name avatar");
   return ok({ message: populated }, 201);
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/messages");
+export const POST = withErrorHandling(handlePOST, "POST /api/messages");

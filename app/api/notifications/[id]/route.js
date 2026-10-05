@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import Notification from "@/models/Notification";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, withErrorHandling } from "@/lib/apiResponse";
 
-export async function PATCH(req, { params }) {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handlePATCH(req, { params }) {
   const user = getCurrentUserFromCookies();
   const authError = requireAuth(user);
   if (authError) return authError;
@@ -16,3 +20,5 @@ export async function PATCH(req, { params }) {
   await notification.save();
   return ok({ notification });
 }
+
+export const PATCH = withErrorHandling(handlePATCH, "PATCH /api/notifications/[id]");

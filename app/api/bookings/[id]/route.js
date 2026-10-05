@@ -2,8 +2,12 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import Guide from "@/models/Guide";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { isValidObjectId } from "@/utils/validators";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 async function loadBookingWithOwnership(id, user) {
   const booking = await Booking.findById(id)
@@ -34,6 +38,6 @@ export async function GET(_req, { params }) {
 
     return ok({ booking });
   } catch (err) {
-    return fail(err.message || "Failed to load booking.", 500);
+    return serverError(err, "Failed to load booking.");
   }
 }

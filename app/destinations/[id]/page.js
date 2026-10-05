@@ -6,22 +6,26 @@ import GuideCard from "@/components/guides/GuideCard";
 import EmptyState from "@/components/ui/EmptyState";
 import MapEmbed from "@/components/shared/MapEmbed";
 import { Users } from "lucide-react";
+import { isValidObjectId, escapeRegex } from "@/utils/validators";
 
 export const dynamic = "force-dynamic";
 
 
 async function getData(id) {
+  if (!isValidObjectId(id)) return null; // malformed id => genuine 404, not a server error
   await connectDB();
   const destination = await Destination.findById(id).lean();
   if (!destination) return null;
-  const guides = await Guide.find({ status: "approved", location: { $regex: destination.name, $options: "i" } })
+  const guides = await Guide.find({ status: "approved", location: { $regex: escapeRegex(destination.name), $options: "i" } })
     .populate("user", "name avatar")
     .lean();
   return JSON.parse(JSON.stringify({ destination, guides }));
 }
 
 export default async function DestinationDetailPage({ params }) {
-  const data = await getData(params.id).catch(() => null);
+  // Only "not found" becomes a 404. Real failures (database down, bad config) propagate to
+  // app/error.js and into the server logs instead of being disguised as a missing page.
+  const data = await getData(params.id);
   if (!data) return notFound();
   const { destination, guides } = data;
 

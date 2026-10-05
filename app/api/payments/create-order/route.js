@@ -3,8 +3,12 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import Payment from "@/models/Payment";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { razorpayClient, isRazorpayConfigured, RAZORPAY_KEY_ID } from "@/lib/razorpay";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 // Creates a payment order for a booking. Uses the real Razorpay Orders
 // API when credentials are configured, otherwise falls back to a
@@ -55,6 +59,6 @@ export async function POST(req) {
 
     return ok({ payment, demoMode: true, message: "Demo Payment Mode: Razorpay is not configured." });
   } catch (err) {
-    return fail(err.message || "Failed to create payment order.", 500);
+    return serverError(err, "Failed to create payment order.");
   }
 }

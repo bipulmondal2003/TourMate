@@ -1,8 +1,12 @@
 import { connectDB } from "@/lib/db";
 import Destination from "@/models/Destination";
 import Guide from "@/models/Guide";
-import { ok, fail } from "@/lib/apiResponse";
-import { isValidObjectId } from "@/utils/validators";
+import { ok, fail, serverError } from "@/lib/apiResponse";
+import { isValidObjectId, escapeRegex } from "@/utils/validators";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 export async function GET(_req, { params }) {
   try {
@@ -13,11 +17,11 @@ export async function GET(_req, { params }) {
 
     const guides = await Guide.find({
       status: "approved",
-      location: { $regex: destination.name, $options: "i" },
+      location: { $regex: escapeRegex(destination.name), $options: "i" },
     }).populate("user", "name avatar");
 
     return ok({ destination, guides });
   } catch (err) {
-    return fail(err.message || "Failed to load destination.", 500);
+    return serverError(err, "Failed to load destination.");
   }
 }

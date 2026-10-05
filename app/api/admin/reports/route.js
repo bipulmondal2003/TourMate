@@ -6,10 +6,14 @@ import Review from "@/models/Review";
 import Payment from "@/models/Payment";
 import Destination from "@/models/Destination";
 import { requireAdmin } from "@/lib/adminGuard";
-import { ok } from "@/lib/apiResponse";
+import { ok, withErrorHandling } from "@/lib/apiResponse";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 // Aggregated stats for the admin dashboard / reports page
-export async function GET() {
+async function handleGET() {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -41,3 +45,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/admin/reports");

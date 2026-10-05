@@ -1,9 +1,13 @@
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { requireAdmin } from "@/lib/adminGuard";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, withErrorHandling } from "@/lib/apiResponse";
 
-export async function GET() {
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
+
+async function handleGET() {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -11,7 +15,7 @@ export async function GET() {
   return ok({ users });
 }
 
-export async function PATCH(req) {
+async function handlePATCH(req) {
   const { error } = requireAdmin();
   if (error) return error;
   await connectDB();
@@ -20,3 +24,6 @@ export async function PATCH(req) {
   if (!user) return fail("User not found.", 404);
   return ok({ user });
 }
+
+export const GET = withErrorHandling(handleGET, "GET /api/admin/users");
+export const PATCH = withErrorHandling(handlePATCH, "PATCH /api/admin/users");

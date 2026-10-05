@@ -4,7 +4,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { Users } from "lucide-react";
 import Reveal, { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 
-export default function FeaturedGuides({ guides }) {
+export default function FeaturedGuides({ guides, loadFailed = false }) {
   return (
     <section className="relative py-20 bg-navy-900/[0.03] dark:bg-white/[0.03]">
       <div className="container-page">
@@ -17,7 +17,13 @@ export default function FeaturedGuides({ guides }) {
             View all →
           </Link>
         </Reveal>
-        {!guides || guides.length === 0 ? (
+        {loadFailed ? (
+          <EmptyState
+            icon={Users}
+            title="Guides are temporarily unavailable"
+            message="We couldn't load guides right now. Please refresh the page in a moment."
+          />
+        ) : !guides || guides.length === 0 ? (
           <EmptyState icon={Users} title="No guides yet" message="Check back soon — new guides are joining TourMate regularly." />
         ) : (
           <RevealGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

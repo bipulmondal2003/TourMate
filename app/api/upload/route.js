@@ -1,6 +1,10 @@
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { uploadImage, isCloudinaryConfigured } from "@/lib/cloudinary";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -34,6 +38,6 @@ export async function POST(req) {
 
     return ok({ url }, 201);
   } catch (err) {
-    return fail(err.message || "Image upload failed.", 500);
+    return serverError(err, "Image upload failed.");
   }
 }

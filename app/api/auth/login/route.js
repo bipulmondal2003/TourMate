@@ -1,7 +1,11 @@
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { verifyPassword, signToken, setAuthCookie } from "@/lib/auth";
-import { ok, fail } from "@/lib/apiResponse";
+import { ok, fail, serverError } from "@/lib/apiResponse";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
@@ -23,6 +27,6 @@ export async function POST(req) {
       user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar },
     });
   } catch (err) {
-    return fail(err.message || "Login failed.", 500);
+    return serverError(err, "Login failed.");
   }
 }

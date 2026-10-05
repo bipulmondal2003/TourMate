@@ -2,8 +2,12 @@ import { connectDB } from "@/lib/db";
 import Booking from "@/models/Booking";
 import Guide from "@/models/Guide";
 import { getCurrentUserFromCookies } from "@/lib/auth";
-import { ok, fail, requireAuth } from "@/lib/apiResponse";
+import { ok, fail, requireAuth, serverError } from "@/lib/apiResponse";
 import { createNotification } from "@/services/notificationService";
+
+// Always run at request time. Without this, Next.js can pre-render GET handlers during `next build`,
+// freezing database results (and ignoring query strings) in the deployed app.
+export const dynamic = "force-dynamic";
 
 export async function POST(_req, { params }) {
   try {
@@ -35,6 +39,6 @@ export async function POST(_req, { params }) {
 
     return ok({ booking });
   } catch (err) {
-    return fail(err.message || "Failed to accept booking.", 500);
+    return serverError(err, "Failed to accept booking.");
   }
 }

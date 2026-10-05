@@ -102,6 +102,26 @@ npm run build      # production build
 npm start          # run production build
 ```
 
+## Deploying to Vercel
+
+1. Push the repo to GitHub and import it in Vercel (framework preset: Next.js, no custom build settings needed).
+2. In **Vercel → Project → Settings → Environment Variables** add (for Production, and Preview if you use it):
+
+| Variable | Required | Notes |
+| -------- | -------- | ----- |
+| `MONGODB_URI` | Yes | Atlas connection string. **Include the database name** (`.../tourmate?...`). Server-only. |
+| `AUTH_SECRET` | Yes | Long random string. The app refuses to sign/verify logins in production without it. |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Your deployed URL, e.g. `https://tour-mate-beta.vercel.app` |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Optional | Image uploads |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Optional | Real payments (demo mode otherwise) |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional | Baked in at build time, so redeploy after changing it |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Optional | AI trip planner (local fallback otherwise) |
+
+3. In **MongoDB Atlas → Network Access** allow `0.0.0.0/0` (Vercel's outbound IPs are not fixed).
+4. Redeploy after changing any environment variable. Runtime errors appear in **Vercel → Project → Logs**.
+
+> `npm run seed` ERASES existing data. It refuses to run against a non-localhost database unless you pass `npm run seed -- --yes`.
+
 ## Demo Accounts
 
 | Role | Email | Password |
