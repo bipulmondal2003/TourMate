@@ -45,7 +45,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-navy-950 text-white">
+    <section className="relative -mt-20 overflow-hidden bg-navy-950 text-white">
       {/* Base gradient + hero-local glows, layered above the global aurora so it stays cinematic */}
       <div className="absolute inset-0 bg-gradient-to-b from-navy-950/95 via-navy-950/90 to-navy-950" />
       <motion.div style={{ y: orbY }} className="absolute inset-0 pointer-events-none">
